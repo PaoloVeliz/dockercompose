@@ -1,0 +1,54 @@
+version: "3.3"
+
+services:
+  ################################################################
+  #                    DATABASE CONFIGURATION                    #
+  ################################################################
+  database:
+    container_name: database
+    hostname: database
+    build: database/.
+    volumes:
+      - ./database/db_data:/var/lib/mysql
+      # - db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: hola1234
+      MYSQL_DATABASE: words
+    expose:
+      - 3306
+    ports:
+      - 3306:3306
+
+  ################################################################
+  #                    CLIENT CONFIGURATION                      #
+  ################################################################
+
+  client:
+    container_name: client
+    build: client/.
+    depends_on:
+      - database
+    volumes:
+      - ./client:/app
+    ports:
+      - "8080:3000"
+    environment:
+      DATABASE_URL: "mysql://root:hola1234@database:3306/words?schema=public"
+
+  ################################################################
+  #                      API CONFIGURATION                       #
+  ################################################################
+  api:
+    stdin_open: true
+    container_name: api
+    build: api/.
+    environment:
+      DATABASE_URL: "mysql://root:hola1234@database:3306/words?schema=public"
+    depends_on:
+      - database
+    volumes:
+      - ./api:/app
+    ports:
+      - 3307:3001
+    command: npx prisma db push
+    command: npm run dev
